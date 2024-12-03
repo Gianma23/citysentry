@@ -1,9 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
+import { getApp } from '@angular/fire/app';
+import { collection, Firestore } from '@angular/fire/firestore';
+import { addDoc } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-report',
@@ -12,13 +15,20 @@ import { IonicModule } from '@ionic/angular';
   templateUrl: './report.page.html',
   styleUrls: ['./report.page.scss'],
 })
-export class ReportPage {
+export class ReportPage implements OnInit {
   step: number = 1; // Tracks the current step (1: Photo, 2: Tags)
   photo: string | null = null; // Holds the photo data
   tags: string[] = []; // Holds the list of tags
   newTag: string = ''; // Holds the input for a new tag
+  reportsCollection: any;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient,
+    private firestore: Firestore
+  ) {}
+
+  ngOnInit() {
+    this.reportsCollection = collection(this.firestore, 'reports'); 
+  }
 
   async takePhoto() {
     try {
@@ -51,18 +61,12 @@ export class ReportPage {
     this.tags = this.tags.filter(t => t !== tag);
   }
 
-  sendReport() {
+  async sendReport() {
+    
     const report = { photo: this.photo, tags: this.tags };
-
-    this.http.post('https://your-server.com/api/reports', report).subscribe({
-      next: response => {
-        console.log('Report sent successfully!', response);
-        this.resetForm(); // Reset the form after submission
-      },
-      error: err => {
-        console.error('Error sending report:', err);
-      },
-    });
+    await addDoc(this.reportsCollection, report);
+    this.resetForm();
+    console.log('Report sent:', report);
   }
 
   resetForm() {
