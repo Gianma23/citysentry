@@ -4,7 +4,6 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
-import { getApp } from '@angular/fire/app';
 import { collection, Firestore } from '@angular/fire/firestore';
 import { addDoc } from '@angular/fire/firestore';
 
@@ -26,17 +25,18 @@ export class ReportPage implements OnInit {
     private firestore: Firestore
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
+    await this.requestPermission();
     this.reportsCollection = collection(this.firestore, 'reports'); 
   }
 
   async takePhoto() {
-    try {
+    try {      
       const image = await Camera.getPhoto({
-        quality: 90,
-        allowEditing: false,
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera,
+        allowEditing: false,
+        quality: 90,
       });
 
       if (image?.dataUrl) {
@@ -47,6 +47,17 @@ export class ReportPage implements OnInit {
       }
     } catch (error) {
       console.error('Error capturing photo:', error);
+    }
+  }
+
+  async requestPermission(): Promise<boolean> {
+    const permissionStatus = await Camera.requestPermissions();
+
+    if (permissionStatus.camera === 'granted') {
+      return true;
+    } else {
+      alert('Camera permission is required. Please enable it in settings.');
+      return false;
     }
   }
 

@@ -1,0 +1,6 @@
+{
+  "appId": "ionic.citysentry",
+  "appName": "citysentry",
+  "webDir": "www/browser",
+  "bundledWebRuntime": false
+}
