@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { HttpClient } from '@angular/common/http';
+import { Geolocation } from '@capacitor/geolocation';
+import { serverTimestamp } from '@angular/fire/firestore';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
-import { collection, Firestore } from '@angular/fire/firestore';
-import { addDoc } from '@angular/fire/firestore';
+import { collection, Firestore, addDoc } from '@angular/fire/firestore';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-report',
@@ -20,18 +21,19 @@ export class ReportPage implements OnInit {
   tags: string[] = []; // Holds the list of tags
   newTag: string = ''; // Holds the input for a new tag
   reportsCollection: any;
+  coordinates: { latitude: number; longitude: number } | null = null;
 
-  constructor(private http: HttpClient,
-    private firestore: Firestore
-  ) {}
+  constructor(
+    private httpClient: HttpClient,
+    private firestore: Firestore) {}
 
   async ngOnInit() {
-    await this.requestPermission();
-    this.reportsCollection = collection(this.firestore, 'reports'); 
+    //await this.requestPermission();
+    this.reportsCollection = collection(this.firestore, 'reports');
   }
 
   async takePhoto() {
-    try {      
+    try {
       const image = await Camera.getPhoto({
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera,
@@ -42,6 +44,7 @@ export class ReportPage implements OnInit {
       if (image?.dataUrl) {
         this.photo = image.dataUrl; // Save photo
         this.step = 2; // Move to the next step
+        await this.getLocation();
       } else {
         console.error('Photo capture failed: No data URL returned');
       }
@@ -61,6 +64,19 @@ export class ReportPage implements OnInit {
     }
   }
 
+  async getLocation() {
+    try {
+      const position = await Geolocation.getCurrentPosition();
+      this.coordinates = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      };
+      console.log('Location captured:', this.coordinates);
+    } catch (error) {
+      console.error('Error getting location:', error);
+    }
+  }
+
   addTag() {
     if (this.newTag && !this.tags.includes(this.newTag.trim())) {
       this.tags.push(this.newTag.trim());
@@ -69,12 +85,16 @@ export class ReportPage implements OnInit {
   }
 
   removeTag(tag: string) {
-    this.tags = this.tags.filter(t => t !== tag);
+    this.tags = this.tags.filter((t) => t !== tag);
   }
 
   async sendReport() {
-    
-    const report = { photo: this.photo, tags: this.tags };
+    const report = {
+      photo: this.photo,
+      tags: this.tags,
+      location: this.coordinates,
+      timestamp: serverTimestamp(),
+    };
     await addDoc(this.reportsCollection, report);
     this.resetForm();
     console.log('Report sent:', report);
@@ -85,5 +105,6 @@ export class ReportPage implements OnInit {
     this.photo = null;
     this.tags = [];
     this.newTag = '';
+    this.coordinates = null;
   }
 }
