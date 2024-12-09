@@ -13,12 +13,12 @@ import {
   IonTitle,
   IonButton,
   IonItem,
-  IonList, IonInput, IonLabel, IonChip, IonIcon } from '@ionic/angular/standalone';
+  IonList, IonInput, IonLabel, IonChip, IonIcon, IonCheckbox } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'app-report',
   standalone: true,
-  imports: [IonIcon, IonChip, IonLabel, IonInput, 
+  imports: [IonCheckbox, IonIcon, IonChip, IonLabel, IonInput, 
     IonList,
     IonItem,
     IonButton,
@@ -39,6 +39,12 @@ export class ReportPage implements OnInit {
   newTag: string = ''; // Holds the input for a new tag
   reportsCollection: any;
   coordinates: { latitude: number; longitude: number } | null = null;
+  environmentalTags = ['Litter', 'Graffiti', 'Illegal Dumping', 'Air Pollution', 'Water Pollution'];
+  infrastructureTags = ['Potholes', 'Cracked Pavements', 'Broken Streetlights', 'Damaged Benches', 'Unmaintained Parks', 'Blocked Drains', 'Abandoned Vehicles'];
+  safetyTags = ['Vandalism', 'Broken Fences', 'Unsafe Buildings', 'Broken Traffic Signals', 'Open Manholes'];
+  aestheticTags = ['Overgrown Vegetation', 'Neglected Monuments', 'Faded Paint', 'Dirty Public Transport'];
+  illegalTags = ['Unauthorized Posters/Flyers', 'Encroachments'];
+  wildlifeTags = ['Dead Animals', 'Animal Menace'];
 
   constructor(private httpClient: HttpClient, private firestore: Firestore) {}
 
@@ -91,8 +97,6 @@ export class ReportPage implements OnInit {
       console.error('Error getting location:', error);
     }
   }
-
-  availableTags: string[] = ['rubbish', 'graffiti', 'pothole', 'abandoned house'];
   
   toggleTag(tag: string) {
     if (this.tags.includes(tag)) {

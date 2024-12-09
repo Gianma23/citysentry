@@ -18,21 +18,69 @@
     <div *ngIf="photo">
       <img [src]="photo" alt="Captured Photo" />
     </div>
-    <ion-list>
-      <ion-item>
-        <ion-label>Select Tags</ion-label>
-        <div class="chip-container">
-          <ion-chip
-            *ngFor="let tag of availableTags"
-            (click)="toggleTag(tag)"
-            [color]="tags.includes(tag) ? 'primary' : 'medium'"
-            outline
-          >
-            <ion-label>{{ tag }}</ion-label>
-          </ion-chip>
-        </div>
-      </ion-item>
-    </ion-list>
+
+       <!-- Predefined Tags -->
+    <div>
+      <h2>Environmental Issues</h2>
+      <div class="chip-container">
+        <ion-chip
+          *ngFor="let tag of environmentalTags"
+          [class.selected]="tags.includes(tag)"
+          (click)="toggleTag(tag)">
+          <ion-label>{{ tag }}</ion-label>
+        </ion-chip>
+      </div>
+
+      <h2>Infrastructure Problems</h2>
+      <div class="chip-container">
+        <ion-chip
+          *ngFor="let tag of infrastructureTags"
+          [class.selected]="tags.includes(tag)"
+          (click)="toggleTag(tag)">
+          <ion-label>{{ tag }}</ion-label>
+        </ion-chip>
+      </div>
+
+      <h2>Public Safety Concerns</h2>
+      <div class="chip-container">
+        <ion-chip
+          *ngFor="let tag of safetyTags"
+          [class.selected]="tags.includes(tag)"
+          (click)="toggleTag(tag)">
+          <ion-label>{{ tag }}</ion-label>
+        </ion-chip>
+      </div>
+
+      <h2>Aesthetic Degradations</h2>
+      <div class="chip-container">
+        <ion-chip
+          *ngFor="let tag of aestheticTags"
+          [class.selected]="tags.includes(tag)"
+          (click)="toggleTag(tag)">
+          <ion-label>{{ tag }}</ion-label>
+        </ion-chip>
+      </div>
+
+      <h2>Illegal Activities</h2>
+      <div class="chip-container">
+        <ion-chip
+          *ngFor="let tag of illegalTags"
+          [class.selected]="tags.includes(tag)"
+          (click)="toggleTag(tag)">
+          <ion-label>{{ tag }}</ion-label>
+        </ion-chip>
+      </div>
+
+      <h2>Wildlife Concerns</h2>
+      <div class="chip-container">
+        <ion-chip
+          *ngFor="let tag of wildlifeTags"
+          [class.selected]="tags.includes(tag)"
+          (click)="toggleTag(tag)">
+          <ion-label>{{ tag }}</ion-label>
+        </ion-chip>
+      </div>
+    </div>
     
     <ion-button expand="full" (click)="sendReport()">Send Report</ion-button>
   </div>

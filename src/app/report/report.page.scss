@@ -1,9 +1,25 @@
 .chip-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
 ion-chip {
-cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid var(--ion-color-medium);
+}
+
+ion-chip.selected {
+  background-color: rgb(42, 228, 187);
+  border: 1px solid transparent;
+}
+
+ion-chip:not(.selected) {
+  background-color: white;
+  color: var(--ion-color-medium);
+}
+
+ion-chip:hover {
+  cursor: pointer;
 }
