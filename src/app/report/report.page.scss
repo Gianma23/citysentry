@@ -1,1 +1,9 @@
-@import '../../theme/variables.scss';
+.chip-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+ion-chip {
+cursor: pointer;
+}

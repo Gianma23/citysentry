@@ -18,16 +18,22 @@
     <div *ngIf="photo">
       <img [src]="photo" alt="Captured Photo" />
     </div>
-    <ion-item>
-      <ion-input [(ngModel)]="newTag" placeholder="Add a tag"></ion-input>
-      <ion-button (click)="addTag()">Add</ion-button>
-    </ion-item>
     <ion-list>
-      <ion-item *ngFor="let tag of tags">
-        {{ tag }}
-        <ion-button fill="clear" slot="end" color="danger" (click)="removeTag(tag)">Remove</ion-button>
+      <ion-item>
+        <ion-label>Select Tags</ion-label>
+        <div class="chip-container">
+          <ion-chip
+            *ngFor="let tag of availableTags"
+            (click)="toggleTag(tag)"
+            [color]="tags.includes(tag) ? 'primary' : 'medium'"
+            outline
+          >
+            <ion-label>{{ tag }}</ion-label>
+          </ion-chip>
+        </div>
       </ion-item>
     </ion-list>
+    
     <ion-button expand="full" (click)="sendReport()">Send Report</ion-button>
   </div>
 </ion-content>

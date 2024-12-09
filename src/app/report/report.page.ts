@@ -4,14 +4,31 @@ import { Geolocation } from '@capacitor/geolocation';
 import { serverTimestamp } from '@angular/fire/firestore';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
 import { collection, Firestore, addDoc } from '@angular/fire/firestore';
 import { HttpClient } from '@angular/common/http';
+import {
+  IonHeader,
+  IonContent,
+  IonToolbar,
+  IonTitle,
+  IonButton,
+  IonItem,
+  IonList, IonInput, IonLabel, IonChip, IonIcon } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'app-report',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [IonIcon, IonChip, IonLabel, IonInput, 
+    IonList,
+    IonItem,
+    IonButton,
+    IonContent,
+    IonHeader,
+    IonTitle,
+    IonToolbar,
+    CommonModule,
+    FormsModule,
+  ],
   templateUrl: './report.page.html',
   styleUrls: ['./report.page.scss'],
 })
@@ -23,9 +40,7 @@ export class ReportPage implements OnInit {
   reportsCollection: any;
   coordinates: { latitude: number; longitude: number } | null = null;
 
-  constructor(
-    private httpClient: HttpClient,
-    private firestore: Firestore) {}
+  constructor(private httpClient: HttpClient, private firestore: Firestore) {}
 
   async ngOnInit() {
     //await this.requestPermission();
@@ -77,15 +92,14 @@ export class ReportPage implements OnInit {
     }
   }
 
-  addTag() {
-    if (this.newTag && !this.tags.includes(this.newTag.trim())) {
-      this.tags.push(this.newTag.trim());
+  availableTags: string[] = ['rubbish', 'graffiti', 'pothole', 'abandoned house'];
+  
+  toggleTag(tag: string) {
+    if (this.tags.includes(tag)) {
+      this.tags = this.tags.filter((t) => t !== tag);
+    } else {
+      this.tags.push(tag); // Add if not selected
     }
-    this.newTag = ''; // Clear the input
-  }
-
-  removeTag(tag: string) {
-    this.tags = this.tags.filter((t) => t !== tag);
   }
 
   async sendReport() {
