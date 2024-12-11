@@ -13,14 +13,21 @@ import {
   IonTitle,
   IonButton,
   IonItem,
-  IonList, IonInput, IonLabel, IonChip, IonIcon, IonCheckbox } from '@ionic/angular/standalone';
+  IonList,
+  IonInput,
+  IonLabel,
+  IonChip,
+  IonIcon,
+  IonCheckbox,
+} from '@ionic/angular/standalone';
 
 @Component({
   selector: 'app-report',
   standalone: true,
-  imports: [IonCheckbox, IonIcon, IonChip, IonLabel, IonInput, 
-    IonList,
-    IonItem,
+  imports: [
+    IonIcon,
+    IonChip,
+    IonLabel,
     IonButton,
     IonContent,
     IonHeader,
@@ -39,14 +46,37 @@ export class ReportPage implements OnInit {
   newTag: string = ''; // Holds the input for a new tag
   reportsCollection: any;
   coordinates: { latitude: number; longitude: number } | null = null;
-  environmentalTags = ['Litter', 'Graffiti', 'Illegal Dumping', 'Air Pollution', 'Water Pollution'];
-  infrastructureTags = ['Potholes', 'Cracked Pavements', 'Broken Streetlights', 'Damaged Benches', 'Unmaintained Parks', 'Blocked Drains', 'Abandoned Vehicles'];
-  safetyTags = ['Vandalism', 'Broken Fences', 'Unsafe Buildings', 'Broken Traffic Signals', 'Open Manholes'];
-  aestheticTags = ['Overgrown Vegetation', 'Neglected Monuments', 'Faded Paint', 'Dirty Public Transport'];
-  illegalTags = ['Unauthorized Posters/Flyers', 'Encroachments'];
+  environmentalTags = [
+    'Litter',
+    'Graffiti',
+    'Illegal Dumping',
+    'Air Pollution',
+    'Water Pollution',
+  ];
+  infrastructureTags = [
+    'Potholes',
+    'Cracked Pavements',
+    'Broken Streetlights',
+    'Damaged Benches',
+    'Unmaintained Parks',
+    'Blocked Drains',
+    'Abandoned Vehicles',
+  ];
+  safetyTags = [
+    'Vandalism',
+    'Broken Fences',
+    'Unsafe Buildings',
+    'Broken Traffic Signals',
+    'Open Manholes',
+  ];
+  aestheticTags = [
+    'Overgrown Vegetation',
+    'Neglected Monuments',
+    'Faded Paint',
+  ];
   wildlifeTags = ['Dead Animals', 'Animal Menace'];
 
-  constructor(private httpClient: HttpClient, private firestore: Firestore) {}
+  constructor(private firestore: Firestore) {}
 
   async ngOnInit() {
     //await this.requestPermission();
@@ -97,7 +127,7 @@ export class ReportPage implements OnInit {
       console.error('Error getting location:', error);
     }
   }
-  
+
   toggleTag(tag: string) {
     if (this.tags.includes(tag)) {
       this.tags = this.tags.filter((t) => t !== tag);
@@ -114,7 +144,7 @@ export class ReportPage implements OnInit {
       timestamp: serverTimestamp(),
     };
     await addDoc(this.reportsCollection, report);
-    this.resetForm();
+    this.step = 3;
     console.log('Report sent:', report);
   }
 

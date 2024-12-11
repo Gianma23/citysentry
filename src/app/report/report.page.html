@@ -61,16 +61,6 @@
         </ion-chip>
       </div>
 
-      <h2>Illegal Activities</h2>
-      <div class="chip-container">
-        <ion-chip
-          *ngFor="let tag of illegalTags"
-          [class.selected]="tags.includes(tag)"
-          (click)="toggleTag(tag)">
-          <ion-label>{{ tag }}</ion-label>
-        </ion-chip>
-      </div>
-
       <h2>Wildlife Concerns</h2>
       <div class="chip-container">
         <ion-chip
@@ -83,5 +73,15 @@
     </div>
     
     <ion-button expand="full" (click)="sendReport()">Send Report</ion-button>
+  </div>
+
+  <!-- Confirmation Page -->
+  <div *ngIf="step === 3">
+    <div class="confirmation-container">
+      <ion-icon name="checkmark-circle" color="success" size="large"></ion-icon>
+      <h2>Report Sent Successfully!</h2>
+      <p>Thank you for helping us keep the city clean and safe.</p>
+      <ion-button expand="full" (click)="resetForm()">Return to Main Page</ion-button>
+    </div>
   </div>
 </ion-content>
