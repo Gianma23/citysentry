@@ -1,11 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Geolocation } from '@capacitor/geolocation';
 import { serverTimestamp } from '@angular/fire/firestore';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { collection, Firestore, addDoc } from '@angular/fire/firestore';
-import { HttpClient } from '@angular/common/http';
+import { ToastController } from '@ionic/angular';
+import { LoadingController } from '@ionic/angular';
+import { Platform } from '@ionic/angular';
+
 import {
   IonHeader,
   IonContent,
@@ -18,13 +21,12 @@ import {
   IonLabel,
   IonChip,
   IonIcon,
-  IonCheckbox,
-} from '@ionic/angular/standalone';
+  IonCheckbox, IonLoading } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'app-report',
   standalone: true,
-  imports: [
+  imports: [IonLoading, 
     IonIcon,
     IonChip,
     IonLabel,
@@ -39,13 +41,14 @@ import {
   templateUrl: './report.page.html',
   styleUrls: ['./report.page.scss'],
 })
-export class ReportPage implements OnInit {
+export class ReportPage {
   step: number = 1; // Tracks the current step (1: Photo, 2: Tags)
   photo: string | null = null; // Holds the photo data
   tags: string[] = []; // Holds the list of tags
   newTag: string = ''; // Holds the input for a new tag
   reportsCollection: any;
   coordinates: { latitude: number; longitude: number } | null = null;
+  @ViewChild('reportLoading') loading: any;	
   environmentalTags = [
     'Litter',
     'Graffiti',
@@ -76,14 +79,17 @@ export class ReportPage implements OnInit {
   ];
   wildlifeTags = ['Dead Animals', 'Animal Menace'];
 
-  constructor(private firestore: Firestore) {}
-
-  async ngOnInit() {  
-    this.reportsCollection = collection(this.firestore, 'reports');
-  }
+  constructor(
+    private firestore: Firestore,
+    private toastController: ToastController,
+    private loadingController: LoadingController,
+    private platform: Platform
+  ) {}
 
   async takePhoto() {
-    const cameraPermission = await this.requestPermission();
+    if (this.platform.is('hybrid')) {
+      const cameraPermission = await this.requestPermission();
+    }
     try {
       const image = await Camera.getPhoto({
         resultType: CameraResultType.DataUrl,
@@ -118,7 +124,7 @@ export class ReportPage implements OnInit {
 
   async requestGeolocationPermission(): Promise<boolean> {
     const permissionStatus = await Geolocation.requestPermissions();
-    
+
     if (permissionStatus.location === 'granted') {
       return true;
     } else {
@@ -128,7 +134,9 @@ export class ReportPage implements OnInit {
   }
 
   async getLocation() {
-    const locationPermission = await this.requestGeolocationPermission();
+    if (this.platform.is('hybrid')) {
+      const locationPermission = await this.requestGeolocationPermission();
+    }
     try {
       const position = await Geolocation.getCurrentPosition();
       this.coordinates = {
@@ -156,9 +164,30 @@ export class ReportPage implements OnInit {
       location: this.coordinates,
       timestamp: serverTimestamp(),
     };
-    await addDoc(this.reportsCollection, report);
-    this.step = 3;
-    console.log('Report sent:', report);
+
+    try {
+
+      await addDoc(collection(this.firestore, 'reports'), report);
+      this.step = 3;
+      console.log('Report sent successfully:', report);
+    } catch (error) {
+      console.error('Failed to send report:', error);
+      if (error instanceof Error) {
+        await this.showToast(error.message, 'danger');
+      }
+    } finally {
+      await this.loading.dismiss();
+    }
+  }
+
+  async showToast(message: string, color: string) {
+    const toast = await this.toastController.create({
+      message,
+      duration: 3000, // Toast is displayed for 3 seconds
+      color,
+      position: 'bottom', // Position can be 'top', 'middle', or 'bottom'
+    });
+    await toast.present();
   }
 
   resetForm() {
