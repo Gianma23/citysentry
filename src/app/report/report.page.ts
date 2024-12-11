@@ -78,16 +78,17 @@ export class ReportPage implements OnInit {
 
   constructor(private firestore: Firestore) {}
 
-  async ngOnInit() {
-    //await this.requestPermission();
+  async ngOnInit() {  
     this.reportsCollection = collection(this.firestore, 'reports');
   }
 
   async takePhoto() {
+    const cameraPermission = await this.requestPermission();
     try {
       const image = await Camera.getPhoto({
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera,
+        saveToGallery: true,
         allowEditing: false,
         quality: 90,
       });
@@ -115,7 +116,19 @@ export class ReportPage implements OnInit {
     }
   }
 
+  async requestGeolocationPermission(): Promise<boolean> {
+    const permissionStatus = await Geolocation.requestPermissions();
+    
+    if (permissionStatus.location === 'granted') {
+      return true;
+    } else {
+      alert('Location permission is required. Please enable it in settings.');
+      return false;
+    }
+  }
+
   async getLocation() {
+    const locationPermission = await this.requestGeolocationPermission();
     try {
       const position = await Geolocation.getCurrentPosition();
       this.coordinates = {
