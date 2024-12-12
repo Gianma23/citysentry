@@ -43,7 +43,7 @@ import {
 })
 export class ReportPage {
   step: number = 1; // Tracks the current step (1: Photo, 2: Tags)
-  photo: string | null = null; // Holds the photo data
+  photo: string | undefined; // Holds the photo data
   tags: string[] = []; // Holds the list of tags
   newTag: string = ''; // Holds the input for a new tag
   reportsCollection: any;
@@ -88,19 +88,20 @@ export class ReportPage {
 
   async takePhoto() {
     if (this.platform.is('hybrid')) {
-      const cameraPermission = await this.requestPermission();
+      const cameraPermission = await Camera.requestPermissions({ permissions: ['camera'] });
     }
     try {
       const image = await Camera.getPhoto({
-        resultType: CameraResultType.DataUrl,
+        resultType: CameraResultType.Base64,
         source: CameraSource.Camera,
-        saveToGallery: true,
+        saveToGallery: false,
         allowEditing: false,
-        quality: 90,
+        quality: 30,
       });
 
-      if (image?.dataUrl) {
-        this.photo = image.dataUrl; // Save photo
+      if (image) {
+        this.photo = image.base64String; // Save photo
+        console.log('Photo captured:', this.photo);
         this.step = 2; // Move to the next step
         await this.getLocation();
       } else {
@@ -192,7 +193,7 @@ export class ReportPage {
 
   resetForm() {
     this.step = 1;
-    this.photo = null;
+    this.photo = undefined;
     this.tags = [];
     this.newTag = '';
     this.coordinates = null;
