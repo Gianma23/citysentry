@@ -6,7 +6,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { collection, Firestore, addDoc } from '@angular/fire/firestore';
 import { ToastController } from '@ionic/angular';
-import { LoadingController } from '@ionic/angular';
 import { Platform } from '@ionic/angular';
 
 import {
@@ -15,18 +14,19 @@ import {
   IonToolbar,
   IonTitle,
   IonButton,
-  IonItem,
-  IonList,
-  IonInput,
   IonLabel,
   IonChip,
   IonIcon,
-  IonCheckbox, IonLoading } from '@ionic/angular/standalone';
+  IonLoading,
+} from '@ionic/angular/standalone';
+import { checkmarkCircle } from 'ionicons/icons';
+import { addIcons } from 'ionicons';
 
 @Component({
   selector: 'app-report',
   standalone: true,
-  imports: [IonLoading, 
+  imports: [
+    IonLoading,
     IonIcon,
     IonChip,
     IonLabel,
@@ -48,7 +48,7 @@ export class ReportPage {
   newTag: string = ''; // Holds the input for a new tag
   reportsCollection: any;
   coordinates: { latitude: number; longitude: number } | null = null;
-  @ViewChild('reportLoading') loading: any;	
+  @ViewChild('reportLoading') loading: any;
   environmentalTags = [
     'Litter',
     'Graffiti',
@@ -57,18 +57,17 @@ export class ReportPage {
     'Water Pollution',
   ];
   infrastructureTags = [
-    'Potholes',
-    'Cracked Pavements',
-    'Broken Streetlights',
-    'Damaged Benches',
-    'Unmaintained Parks',
-    'Blocked Drains',
-    'Abandoned Vehicles',
+    'Pothole',
+    'Cracked Pavement',
+    'Broken Streetlight',
+    'Damaged Bench',
+    'Unmaintained Bridge',
+    'Blocked Drainage',
+    'Abandoned Vehicle',
   ];
   safetyTags = [
     'Vandalism',
-    'Broken Fences',
-    'Unsafe Buildings',
+    'Unsafe Building',
     'Broken Traffic Signals',
     'Open Manholes',
   ];
@@ -82,13 +81,20 @@ export class ReportPage {
   constructor(
     private firestore: Firestore,
     private toastController: ToastController,
-    private loadingController: LoadingController,
     private platform: Platform
-  ) {}
+  ) {
+    addIcons({ checkmarkCircle });
+  }
 
   async takePhoto() {
     if (this.platform.is('hybrid')) {
-      const cameraPermission = await Camera.requestPermissions({ permissions: ['camera'] });
+      const cameraPermission = await Camera.requestPermissions({
+        permissions: ['camera'],
+      });
+      if (cameraPermission.camera !== 'granted') {
+        this.loading.dismiss();
+        return;
+      }
     }
     try {
       const image = await Camera.getPhoto({
@@ -100,10 +106,9 @@ export class ReportPage {
       });
 
       if (image) {
-        this.photo = image.base64String; // Save photo
+        this.photo = image.base64String;
         console.log('Photo captured:', this.photo);
-        this.step = 2; // Move to the next step
-        await this.getLocation();
+        this.step = 2;
       } else {
         console.error('Photo capture failed: No data URL returned');
       }
@@ -112,41 +117,27 @@ export class ReportPage {
     }
   }
 
-  async requestPermission(): Promise<boolean> {
-    const permissionStatus = await Camera.requestPermissions();
-
-    if (permissionStatus.camera === 'granted') {
-      return true;
-    } else {
-      alert('Camera permission is required. Please enable it in settings.');
-      return false;
-    }
-  }
-
-  async requestGeolocationPermission(): Promise<boolean> {
-    const permissionStatus = await Geolocation.requestPermissions();
-
-    if (permissionStatus.location === 'granted') {
-      return true;
-    } else {
-      alert('Location permission is required. Please enable it in settings.');
-      return false;
-    }
-  }
-
   async getLocation() {
     if (this.platform.is('hybrid')) {
-      const locationPermission = await this.requestGeolocationPermission();
+      const permissionStatus = await Geolocation.requestPermissions({
+        permissions: ['location'],
+      });
+      if (permissionStatus.location !== 'granted') {
+        this.loading.dismiss();
+        return;
+      }
     }
-    try {
-      const position = await Geolocation.getCurrentPosition();
+
+    const position = await Geolocation.getCurrentPosition();
+    if (position) {
       this.coordinates = {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       };
       console.log('Location captured:', this.coordinates);
-    } catch (error) {
-      console.error('Error getting location:', error);
+    } else {
+      this.coordinates = null;
+      return;
     }
   }
 
@@ -159,6 +150,17 @@ export class ReportPage {
   }
 
   async sendReport() {
+    await this.getLocation();
+    console.log(this.coordinates);
+    if (!this.coordinates) {
+      await this.loading.dismiss();
+      await this.showToast(
+        'Location is not available. Please ensure location services are enabled.',
+        'warning'
+      );
+      return;
+    }
+
     const report = {
       photo: this.photo,
       tags: this.tags,
@@ -167,7 +169,6 @@ export class ReportPage {
     };
 
     try {
-
       await addDoc(collection(this.firestore, 'reports'), report);
       this.step = 3;
       console.log('Report sent successfully:', report);
