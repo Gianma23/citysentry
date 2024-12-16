@@ -51,7 +51,6 @@ export class ReportPage {
   @ViewChild('reportLoading') loading: any;
   environmentalTags = [
     'Litter',
-    'Graffiti',
     'Illegal Dumping',
     'Air Pollution',
     'Water Pollution',
@@ -61,18 +60,19 @@ export class ReportPage {
     'Cracked Pavement',
     'Broken Streetlight',
     'Damaged Bench',
-    'Unmaintained Bridge',
     'Blocked Drainage',
     'Abandoned Vehicle',
   ];
   safetyTags = [
     'Vandalism',
     'Unsafe Building',
+    'Unsafe Bridge',
     'Broken Traffic Signals',
     'Open Manholes',
   ];
   aestheticTags = [
     'Overgrown Vegetation',
+    'Graffiti',
     'Neglected Monuments',
     'Faded Paint',
   ];
