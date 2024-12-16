@@ -123,7 +123,7 @@ export class ReportPage {
         permissions: ['location'],
       });
       if (permissionStatus.location !== 'granted') {
-        this.loading.dismiss();
+        await this.loading.dismiss();
         return;
       }
     }
@@ -136,6 +136,11 @@ export class ReportPage {
       };
       console.log('Location captured:', this.coordinates);
     } else {
+      await this.loading.dismiss();
+      await this.showToast(
+        'Location is not available. Please ensure location services are enabled.',
+        'warning'
+      );
       this.coordinates = null;
       return;
     }
@@ -152,14 +157,6 @@ export class ReportPage {
   async sendReport() {
     await this.getLocation();
     console.log(this.coordinates);
-    if (!this.coordinates) {
-      await this.loading.dismiss();
-      await this.showToast(
-        'Location is not available. Please ensure location services are enabled.',
-        'warning'
-      );
-      return;
-    }
 
     const report = {
       photo: this.photo,
