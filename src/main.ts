@@ -1,4 +1,3 @@
-import { importProvidersFrom } from '@angular/core';
 import { environment } from './environments/environment';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
@@ -17,7 +16,7 @@ import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 
 import { getApp, initializeApp, provideFirebaseApp } from '@angular/fire/app';
-import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+import { initializeFirestore, provideFirestore, disableNetwork, clearIndexedDbPersistence } from '@angular/fire/firestore';  // Use initializeFirestore instead of getFirestore
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -26,6 +25,12 @@ bootstrapApplication(AppComponent, {
     provideHttpClient(),
     provideRouter(routes, withPreloading(PreloadAllModules)),
     provideFirebaseApp(() => initializeApp({ ...environment.firebaseConfig })),
-    provideFirestore(() => getFirestore()),
+    provideFirestore(() => {
+      const firestore = initializeFirestore(getApp(), { cacheSizeBytes: 1048576 });
+      clearIndexedDbPersistence(firestore).catch((err) => {
+        console.error('Failed to clear persistence:', err);
+      });
+      return firestore;
+    }),
   ],
 });
