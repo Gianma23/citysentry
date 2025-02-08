@@ -17,15 +17,14 @@ import {
   IonLabel,
   IonChip,
   IonIcon,
-  IonLoading,
-} from '@ionic/angular/standalone';
+  IonLoading, IonToast } from '@ionic/angular/standalone';
 import { checkmarkCircle } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 
 @Component({
   selector: 'app-report',
   standalone: true,
-  imports: [
+  imports: [IonToast, 
     IonLoading,
     IonIcon,
     IonChip,
@@ -100,6 +99,8 @@ export class ReportPage {
       const image = await Camera.getPhoto({
         resultType: CameraResultType.Base64,
         source: CameraSource.Camera,
+        width: 1024,
+        height: 1024,
         saveToGallery: false,
         allowEditing: false,
         quality: 30,
@@ -109,6 +110,7 @@ export class ReportPage {
         this.photo = image.base64String;
         console.log('Photo captured:', this.photo);
         this.step = 2;
+        await this.getLocation();
       } else {
         console.error('Photo capture failed: No data URL returned');
       }
@@ -128,7 +130,9 @@ export class ReportPage {
       }
     }
 
-    const position = await Geolocation.getCurrentPosition();
+    const position = await Geolocation.getCurrentPosition({
+      enableHighAccuracy: true,
+    });
     if (position) {
       this.coordinates = {
         latitude: position.coords.latitude,
@@ -155,8 +159,9 @@ export class ReportPage {
   }
 
   async sendReport() {
-    await this.getLocation();
-    console.log(this.coordinates);
+    if(this.coordinates === null) {
+      return await this.showToast('Location is being calculated, please retry.', 'warning');
+    }
 
     const report = {
       photo: this.photo,
@@ -164,14 +169,16 @@ export class ReportPage {
       location: this.coordinates,
       timestamp: serverTimestamp(),
     };
-
+    
     try {
+      await this.loading.present();
       await addDoc(collection(this.firestore, 'reports'), report);
       this.step = 3;
       console.log('Report sent successfully:', report);
     } catch (error) {
       console.error('Failed to send report:', error);
       if (error instanceof Error) {
+        await this.loading.dismiss();
         await this.showToast(error.message, 'danger');
       }
     } finally {
@@ -180,13 +187,17 @@ export class ReportPage {
   }
 
   async showToast(message: string, color: string) {
-    const toast = await this.toastController.create({
-      message,
-      duration: 3000, // Toast is displayed for 3 seconds
-      color,
-      position: 'bottom', // Position can be 'top', 'middle', or 'bottom'
-    });
-    await toast.present();
+    try {
+      const toast = await this.toastController.create({
+        message,
+        duration: 3000,
+        color,
+        position: 'bottom',
+      });
+      await toast.present();
+    } catch (error) {
+      console.error('Failed to present toast:', error);
+    }
   }
 
   resetForm() {

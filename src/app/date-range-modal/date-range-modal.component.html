@@ -1,0 +1,30 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Select Time Range</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Cancel</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item>
+    <ion-label position="stacked">Start Date</ion-label>
+    <ion-datetime
+      presentation="date"
+      prefer-wheel="false"
+      [(ngModel)]="startTime"
+    ></ion-datetime>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">End Date</ion-label>
+    <ion-datetime
+      presentation="date"
+      prefer-wheel="false"
+      [(ngModel)]="endTime"
+    ></ion-datetime>
+  </ion-item>
+  
+  <ion-button expand="full" (click)="apply()">Apply</ion-button>
+</ion-content>

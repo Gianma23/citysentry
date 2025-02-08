@@ -1,21 +1,28 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
-      Tab 2
+      Past Reports
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="not-implemented-content">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Under Construction</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="ion-padding">
+  <ion-item>
+    <ion-label>Tag Group</ion-label>
+    <ion-select [(ngModel)]="selectedTagGroup" (ionChange)="filterReports()">
+      <ion-select-option value="environmentalTags">Environmental</ion-select-option>
+      <ion-select-option value="infrastructureTags">Infrastructure</ion-select-option>
+      <ion-select-option value="safetyTags">Safety</ion-select-option>
+      <ion-select-option value="aestheticTags">Aesthetic</ion-select-option>
+      <ion-select-option value="wildlifeTags">Wildlife</ion-select-option>
+    </ion-select>
+  </ion-item>
 
-  <div class="not-implemented-container">
-    <ion-icon name="construct-outline" size="large" class="icon"></ion-icon>
-    <h1>This tab is not yet implemented!</h1>
-    <p>Stay tuned for updates. We're working on it!</p>
-  </div>
+  <ion-item button (click)="openDateRangeModal()">
+    <ion-label>
+      {{ selectedStartTime | date:'shortDate' }} - {{ selectedEndTime | date:'shortDate' }}
+    </ion-label>
+  </ion-item>
+
+  <div id="map"></div>
 </ion-content>
