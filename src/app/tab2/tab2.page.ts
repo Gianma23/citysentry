@@ -1,4 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import Map from 'ol/Map';
+import View from 'ol/View';
+import Heatmap from 'ol/layer/Heatmap';
+import TileLayer from 'ol/layer/Tile';
+import OSM from 'ol/source/OSM';
+import VectorSource from 'ol/source/Vector';
+import { Feature } from 'ol';
+import { Point } from 'ol/geom';
+import { fromLonLat } from 'ol/proj';
+import { Icon, Style } from 'ol/style';
+import { defaults as defaultControls } from 'ol/control';
+import { Vector as VectorLayer } from 'ol/layer';
+
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import {
@@ -6,8 +19,6 @@ import {
   LoadingController,
   ModalController,
 } from '@ionic/angular';
-import * as L from 'leaflet';
-import 'leaflet.heat';
 import { Geolocation } from '@capacitor/geolocation';
 import { DateRangeModalComponent } from '../date-range-modal/date-range-modal.component';
 import {
@@ -25,15 +36,16 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, IonicModule],
 })
-export class Tab2Page implements OnInit {
-  map: L.Map | undefined;
+export class Tab2Page implements AfterViewInit {
+  map!: Map;
+  heatmapLayer!: Heatmap;
+  vectorSource = new VectorSource();
   heatLayer: any;
   reports: any[] = [];
   userLocation: { latitude: number; longitude: number } | null = null;
   selectedTagGroup = 'environmentalTags';
   selectedStartTime: string;
   selectedEndTime: string;
-
   tagGroups: { [key: string]: string[] } = {
     environmentalTags: [
       'Litter',
@@ -78,8 +90,8 @@ export class Tab2Page implements OnInit {
     ).toISOString();
   }
 
-  async ngOnInit() {
-    await this.loadMap();
+  async ngAfterViewInit() {
+    this.initMap();
     await this.getUserLocation();
     if (this.userLocation) {
       await this.fetchReportsNearUser();
@@ -87,48 +99,99 @@ export class Tab2Page implements OnInit {
     this.filterReports();
   }
 
-  async loadMap() {
-    this.map = L.map('map');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(
-      this.map
-    );
+  initMap() {
+    this.heatmapLayer = new Heatmap({
+      source: this.vectorSource,
+      blur: 15,
+      radius: 10,
+    });
+
+    this.map = new Map({
+      target: 'map',
+      layers: [
+        new TileLayer({
+          source: new OSM(),
+        }),
+        this.heatmapLayer,
+      ],
+      view: new View({
+        center: fromLonLat([10.4, 43.7]), // Center the map on Pisa
+        zoom: 13,
+      }),
+      controls: defaultControls({ attribution: false }),
+    });
   }
 
   async getUserLocation() {
     try {
-      //const position = await Geolocation.getCurrentPosition();
+      const permissions = await Geolocation.checkPermissions();
+      if (permissions.location !== 'granted') {
+        await Geolocation.requestPermissions();
+      }
+      const position = await Geolocation.getCurrentPosition();
       this.userLocation = {
-        //latitude: position.coords.latitude,
-        //longitude: position.coords.longitude,
-        latitude: 43.724591,
-        longitude: 10.38298,
+        /* latitude: position.coords.latitude,
+        longitude: position.coords.longitude, */
+        latitude: 43.724591, //TODO: Remove this hardcoded value
+        longitude: 10.382981,
       };
       console.log('User location:', this.userLocation);
 
       // Center the map on the user's location
       if (this.map)
-        this.map.setView(
-          [this.userLocation.latitude, this.userLocation.longitude],
-          15
-        );
+        this.map
+          .getView()
+          .setCenter(
+            fromLonLat([
+              this.userLocation.longitude,
+              this.userLocation.latitude,
+            ])
+          );
     } catch (error) {
       console.error('Error getting user location:', error);
     }
   }
 
   async fetchReportsNearUser() {
-    const loading = await this.loadingCtrl.create({
-      message: 'Loading reports...',
-    });
-    await loading.present();
+    const RADIUS_IN_KM = 10;
+    const EARTH_RADIUS = 6371; // Earth's radius in km
 
-    const RADIUS_IN_KM = 10; // Set the search radius (in kilometers)
+    // Get user location
+    if (!this.userLocation) {
+      console.error('User location not available');
+      return;
+    }
+    const userLat = this.userLocation.latitude;
+    const userLon = this.userLocation.longitude;
+
+    // Calculate latitude/longitude bounds for the bounding box
+    const latDelta = (RADIUS_IN_KM / EARTH_RADIUS) * (180 / Math.PI);
+    const lonDelta =
+      (RADIUS_IN_KM / (EARTH_RADIUS * Math.cos((Math.PI * userLat) / 180))) *
+      (180 / Math.PI);
+
+    const minLat = userLat - latDelta;
+    const maxLat = userLat + latDelta;
+    const minLon = userLon - lonDelta;
+    const maxLon = userLon + lonDelta;
+
+    console.log(
+      `Bounding box: (${minLat}, ${minLon}) to (${maxLat}, ${maxLon})`
+    );
+
+    // Query Firestore for reports within the bounding box
+    const reportsRef = collection(this.firestore, 'reports');
+    const q = query(
+      reportsRef,
+      where('location.latitude', '>=', minLat),
+      where('location.latitude', '<=', maxLat),
+      where('location.longitude', '>=', minLon),
+      where('location.longitude', '<=', maxLon)
+    );
 
     try {
-      const reportsSnapshot = await getDocs(
-        collection(this.firestore, 'reports')
-      );
-      const allReports = reportsSnapshot.docs.map((doc) => ({
+      const querySnapshot = await getDocs(q);
+      this.reports = querySnapshot.docs.map((doc) => ({
         location: doc.data()['location'],
         tags: doc.data()['tags'],
         timestamp: doc.data()['timestamp']
@@ -136,25 +199,9 @@ export class Tab2Page implements OnInit {
           : null,
       }));
 
-      // Filter reports within the specified radius
-      this.reports = allReports.filter((report) => {
-        if (report['location'] && this.userLocation) {
-          const distance = this.calculateDistance(
-            this.userLocation.latitude,
-            this.userLocation.longitude,
-            report['location'].latitude,
-            report['location'].longitude
-          );
-          return distance <= RADIUS_IN_KM;
-        }
-        return false;
-      });
-
-      console.log('Nearby reports:', this.reports);
+      console.log('Reports within 10 km:', this.reports);
     } catch (error) {
-      console.error('Error fetching reports:', error);
-    } finally {
-      await loading.dismiss();
+      console.error('Error fetching nearby reports:', error);
     }
   }
 
@@ -182,24 +229,24 @@ export class Tab2Page implements OnInit {
     this.displayHeatmap(filteredReports);
   }
 
-  async displayHeatmap(filteredReports: any[]) {
-    if (this.map && this.reports.length > 0) {
-      if (this.heatLayer) this.map.removeLayer(this.heatLayer);
+  displayHeatmap(filteredReports: any[]) {
+    // Clear existing features
+    this.vectorSource.clear();
 
-      const heatmapData = filteredReports.map((report) => [
-        report.location.latitude,
-        report.location.longitude,
-        0.5, // Intensity
-      ]);
+    // Add new features to the heatmap layer
+    filteredReports.forEach((report) => {
+      const { latitude, longitude } = report.location;
+      const feature = new Feature({
+        geometry: new Point(fromLonLat([longitude, latitude])),
+      });
 
-      this.heatLayer = (L as any)
-        .heatLayer(heatmapData, {
-          radius: 20,
-          blur: 12,
-          maxZoom: 15,
-        })
-        .addTo(this.map);
-    }
+      // Add custom weight based on report data (if needed)
+      feature.set('weight', 0.8); // Customize the weight (0-1) based on your criteria
+
+      this.vectorSource.addFeature(feature);
+    });
+
+    console.log('Heatmap updated with filtered reports:', filteredReports);
   }
 
   async openDateRangeModal() {
@@ -219,7 +266,6 @@ export class Tab2Page implements OnInit {
         this.filterReports();
       }
     });
-
     return await modal.present();
   }
 

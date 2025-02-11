@@ -17,14 +17,14 @@ import {
   IonLabel,
   IonChip,
   IonIcon,
-  IonLoading, IonToast } from '@ionic/angular/standalone';
+  IonLoading, IonToast, IonFooter } from '@ionic/angular/standalone';
 import { checkmarkCircle } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
 
 @Component({
   selector: 'app-report',
   standalone: true,
-  imports: [IonToast, 
+  imports: [IonFooter, IonToast, 
     IonLoading,
     IonIcon,
     IonChip,

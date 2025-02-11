@@ -5,10 +5,7 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <!-- Step 1: Capture Photo -->
-  <div *ngIf="step === 1">
-    <ion-button expand="full" (click)="takePhoto()">Take Photo</ion-button>
-  </div>
+
 
   <!-- Step 2: Add Tags -->
   <div *ngIf="step === 2">
@@ -82,4 +79,10 @@
       <ion-button expand="full" (click)="resetForm()">Return to Main Page</ion-button>
     </div>
   </div>
+
 </ion-content>
+
+<!-- Step 1: Capture Photo -->
+<div *ngIf="step === 1" class="take-photo">
+  <ion-button expand="full" (click)="takePhoto()">Take Photo</ion-button>
+</div>
