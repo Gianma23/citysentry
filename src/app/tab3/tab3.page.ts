@@ -36,7 +36,7 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, IonicModule],
 })
-export class Tab3Page implements AfterViewInit {
+export class Tab3Page implements OnInit, OnDestroy {
   map!: Map;
   heatmapLayer!: Heatmap;
   vectorSource = new VectorSource();
@@ -51,13 +51,19 @@ export class Tab3Page implements AfterViewInit {
     private modalCtrl: ModalController
   ) {}
 
-  async ngAfterViewInit() {
+  async ngOnInit() {
     this.initMap();
     await this.getUserLocation();
     if (this.userLocation) {
       await this.fetchPredictionsNearUser();
     }
     this.filterReports();
+  }
+  
+  ngOnDestroy() {
+    if (this.map) {
+      this.map.setTarget(undefined);
+    }
   }
 
   initMap() {
@@ -68,7 +74,7 @@ export class Tab3Page implements AfterViewInit {
     });
 
     this.map = new Map({
-      target: 'map',
+      target: 'map2',
       layers: [
         new TileLayer({
           source: new OSM(),

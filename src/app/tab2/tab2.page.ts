@@ -36,7 +36,7 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule, IonicModule],
 })
-export class Tab2Page implements AfterViewInit {
+export class Tab2Page implements OnInit, OnDestroy {
   map!: Map;
   heatmapLayer!: Heatmap;
   vectorSource = new VectorSource();
@@ -90,7 +90,7 @@ export class Tab2Page implements AfterViewInit {
     ).toISOString();
   }
 
-  async ngAfterViewInit() {
+  async ngOnInit() {
     this.initMap();
     await this.getUserLocation();
     if (this.userLocation) {
@@ -99,7 +99,15 @@ export class Tab2Page implements AfterViewInit {
     this.filterReports();
   }
 
+  ngOnDestroy() {
+    if (this.map) {
+      this.map.setTarget(undefined);
+    }
+    console.log('Tab2Page destroyed');
+  }
+
   initMap() {
+
     this.heatmapLayer = new Heatmap({
       source: this.vectorSource,
       blur: 15,
@@ -107,7 +115,7 @@ export class Tab2Page implements AfterViewInit {
     });
 
     this.map = new Map({
-      target: 'map',
+      target: 'map1',
       layers: [
         new TileLayer({
           source: new OSM(),
